@@ -95,7 +95,7 @@ public class Boss : MonoBehaviour
         float scale = transform.localScale.x;
         if (scale > 1.6f)
         {
-            transform.localScale = new Vector3(scale - 0.4f, scale - 0.4f, scale - 0.4f);
+            transform.localScale = new Vector3(scale - 0.8f, scale - 0.8f, scale - 0.8f);
         }
     }
 }
