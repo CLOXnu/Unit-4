@@ -10,6 +10,7 @@ public class SpawnManager : MonoBehaviour
     private GameManager _gameManager;
     public GameObject enemyPrefab;
     public GameObject matePrefab;
+    public GameObject bossPrefab;
     public List<GameObject> propsPrefabs;
     public List<float> propsProbability;
     public TextMeshProUGUI levelText;
@@ -30,30 +31,64 @@ public class SpawnManager : MonoBehaviour
         {
             return;
         }
-        if (FindObjectsOfType<Enemy>().Length == 0)
+        if (FindObjectsOfType<Enemy>().Length + FindObjectsOfType<Boss>().Length == 0)
         {
             level += 1;
             waveNumber = level;
             UpdateLevelText();
-            RemoveProps();
-            SpawnRandomProps(2);
-            SpawnEnemyWave(waveNumber);
-            if (level >= 8)
+
+            if (level == 20)
             {
-                SpawnMates(1);
+                Boss boss = SpawnBoss();
+                boss.mass = 30.0f;
+                boss.speed = 60.0f;
+            }
+            else if (level == 30)
+            {
+                Boss boss = SpawnBoss();
+                boss.mass = 120.0f;
+                boss.speed = 500.0f;
+            }
+            else if (level == 40)
+            {
+                Boss boss = SpawnBoss();
+                boss.mass = 300.0f;
+                boss.speed = 2400.0f;
+            }
+            else
+            {
+                RemoveProps();
+                SpawnRandomProps(2);
+                SpawnEnemyWave(waveNumber);
+                if (level >= 8)
+                {
+                    SpawnMates(1);
+                }
             }
         }
     }
     
-    void SpawnEnemyWave(int enemiesToSpawn)
+    public void SpawnEnemyWave(int enemiesToSpawn)
     {
         for (int i = 0; i < enemiesToSpawn; i++)
         {
             Instantiate(enemyPrefab, GenerateSpawnPosition(), enemyPrefab.transform.rotation);
         }
     }
+    
+    public void SpawnEnemies(int enemiesToSpawn, bool isOnTheGround=true,
+        bool hasBigger=false, bool hasSmaller=false, bool hasPowerup=false)
+    {
+        for (int i = 0; i < enemiesToSpawn; i++)
+        {
+            Enemy enemy = Instantiate(enemyPrefab, GenerateSpawnPosition(isOnTheGround), enemyPrefab.transform.rotation).GetComponent<Enemy>();
+            enemy.biggerTrig = hasBigger;
+            enemy.smallerTrig = hasSmaller;
+            enemy.powerupTrig = hasPowerup;
+        }
+    }
 
-    void SpawnMates(int number)
+    public void SpawnMates(int number)
     {
         for (int i = 0; i < number; i++)
         {
@@ -61,12 +96,17 @@ public class SpawnManager : MonoBehaviour
         }
     }
 
-    void SpawnRandomProps(int number)
+    public void SpawnRandomProps(int number)
     {
         for (int i = 0; i < number; i++)
         {
             SpawnProp(GetRandomProp());
         }
+    }
+
+    public Boss SpawnBoss()
+    {
+        return Instantiate(bossPrefab, GenerateSpawnPosition(false), bossPrefab.transform.rotation).GetComponent<Boss>();
     }
 
     GameObject GetRandomProp()
@@ -106,10 +146,11 @@ public class SpawnManager : MonoBehaviour
         levelText.text = "level: " + level;
     }
 
-    private Vector3 GenerateSpawnPosition()
+    private Vector3 GenerateSpawnPosition(bool isOnTheGround=true)
     {
         float spawnPosX = Random.Range(-spawnRange, spawnRange);
         float spawnPosZ = Random.Range(-spawnRange, spawnRange);
-        return new Vector3(spawnPosX, 0, spawnPosZ);
+        float spawnPosY = isOnTheGround ? 0 : 10;
+        return new Vector3(spawnPosX, spawnPosY, spawnPosZ);
     }
 }

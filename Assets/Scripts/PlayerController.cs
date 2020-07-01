@@ -12,7 +12,6 @@ public class PlayerController : MonoBehaviour
     public float speed = 5.0f;
     public float powerupForce = 15.0f;
 
-    private bool isOnTheGround = true;
     private float _jumpForce;
     private float _speed;
     private float _powerupForce;
@@ -72,10 +71,22 @@ public class PlayerController : MonoBehaviour
         playerRb.AddForce(focalPoint.transform.forward * _speed * verticalInput);
         playerRb.AddForce(focalPoint.transform.right * _speed * horizontalInput);
 
-        if (hasSuperstar && isOnTheGround && Input.GetKeyDown(KeyCode.Space))
+        if (hasSuperstar && Input.GetKeyDown(KeyCode.Space))
         {
-            playerRb.AddForce(_gameManager.transform.up * _jumpForce * (hasBigger ? 5 : 1), ForceMode.Impulse);
-            isOnTheGround = false;
+            Ray ray = new Ray(transform.position, Vector3.down);
+            RaycastHit hit;
+            if (Physics.Raycast(ray, out hit))
+            {
+                GameObject hitGameObject = hit.collider.gameObject;
+                if (hit.distance < 0.5f * transform.localScale.y + 0.01f &&
+                    hitGameObject.CompareTag("Ground") || 
+                    hitGameObject.CompareTag("Obstacle") || 
+                    hitGameObject.CompareTag("Enemy") ||
+                    hitGameObject.CompareTag("Mate"))
+                {
+                    playerRb.AddForce(Vector3.up * _jumpForce * (hasBigger ? 5 : 1), ForceMode.Impulse);
+                }
+            }
         }
 
         // 围剿判断
@@ -177,11 +188,6 @@ public class PlayerController : MonoBehaviour
             
             enemyRigidbody.AddForce(awayFromPlayer * _powerupForce, ForceMode.Impulse);
         }
-
-        if (other.gameObject.CompareTag("Ground"))
-        {
-            isOnTheGround = true;
-        }
     }
 
     bool IsManyEnemyAround()
@@ -195,8 +201,28 @@ public class PlayerController : MonoBehaviour
                 aroundEnemyCount += 1;
             }
         }
+        
+        Mate[] mates = GameObject.FindObjectsOfType<Mate>();
+        int aroundMatesCount = 0;
+        foreach (var mate in mates)
+        {
+            if (Vector3.Distance(transform.position, mate.transform.position) < 2)
+            {
+                aroundMatesCount += 1;
+            }
+        }
+        
+        Boss[] bosses = GameObject.FindObjectsOfType<Boss>();
+        int aroundBossesCount = 0;
+        foreach (var boss in bosses)
+        {
+            if (Vector3.Distance(transform.position, boss.transform.position) < 2)
+            {
+                aroundBossesCount += 1;
+            }
+        }
 
-        if (aroundEnemyCount >= 4)
+        if (aroundEnemyCount + aroundMatesCount + aroundBossesCount >= 5)
         {
             return true;
         }

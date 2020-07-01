@@ -11,6 +11,7 @@ TagManager:
   - Smaller
   - Ground
   - Mate
+  - Obstacle
   layers:
   - Default
   - TransparentFX

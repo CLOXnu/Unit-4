@@ -56,7 +56,16 @@ public class Mate : MonoBehaviour
 
         if (focusOnEnemy != null)
         {
-            if (Vector3.Distance(focusOnEnemy.gameObject.transform.position, transform.position) > 10)
+            Ray ray = new Ray(focusOnEnemy.transform.position, Vector3.down);
+            RaycastHit hit;
+            if (Physics.Raycast(ray, out hit))
+            {
+                if (!hit.collider.gameObject.CompareTag("Ground"))
+                {
+                    focusOnEnemy = null;
+                }
+            }
+            else
             {
                 focusOnEnemy = null;
             }
@@ -209,8 +218,23 @@ public class Mate : MonoBehaviour
                 aroundEnemyCount += 1;
             }
         }
+        
+        Boss[] bosses = GameObject.FindObjectsOfType<Boss>();
+        int aroundBossesCount = 0;
+        foreach (var boss in bosses)
+        {
+            if (Vector3.Distance(transform.position, boss.transform.position) < 2)
+            {
+                aroundBossesCount += 1;
+            }
+        }
 
-        if (aroundEnemyCount >= 4)
+        if (Vector3.Distance(transform.position, player.transform.position) < 2)
+        {
+            aroundEnemyCount += 1;
+        }
+
+        if (aroundEnemyCount + aroundBossesCount >= 5)
         {
             return true;
         }

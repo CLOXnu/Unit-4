@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Analytics;
 
 public class Enemy : MonoBehaviour
 {
@@ -24,6 +25,10 @@ public class Enemy : MonoBehaviour
     private IEnumerator biggerCountDown = null;
     
     private GameObject focusOnPlayer = null;
+
+    public bool biggerTrig;
+    public bool smallerTrig;
+    public bool powerupTrig;
     
     // Start is called before the first frame update
     void Start()
@@ -53,10 +58,26 @@ public class Enemy : MonoBehaviour
         {
             return;
         }
+
+        if (biggerTrig) triggerBigger();
+        if (smallerTrig) triggerSmaller();
+        if (powerupTrig) triggerPowerup();
+        biggerTrig = false;
+        smallerTrig = false;
+        powerupTrig = false;
         
         if (focusOnPlayer != null)
         {
-            if (Vector3.Distance(focusOnPlayer.gameObject.transform.position, transform.position) > 10)
+            Ray ray = new Ray(focusOnPlayer.transform.position, Vector3.down);
+            RaycastHit hit;
+            if (Physics.Raycast(ray, out hit))
+            {
+                if (!hit.collider.gameObject.CompareTag("Ground"))
+                {
+                    focusOnPlayer = null;
+                }
+            }
+            else
             {
                 focusOnPlayer = null;
             }
@@ -112,62 +133,75 @@ public class Enemy : MonoBehaviour
     {
         if (other.CompareTag("Powerup"))
         {
-            hasPowerup = true;
-            powerupIndicator.gameObject.SetActive(true);
             Destroy(other.gameObject);
-
-            if (powerupCountDown != null)
-            {
-                StopCoroutine(powerupCountDown);
-            }
-            powerupCountDown = PowerupCountdownRoutine();
-            StartCoroutine(powerupCountDown);
+            triggerPowerup();
         }
         else if (other.CompareTag("Bigger"))
         {
-            if (!hasBigger)
-            {
-                transform.localScale = new Vector3(4.5f, 4.5f, 4.5f);
-                transform.position = new Vector3(transform.position.x, 0, transform.position.z);
-                powerupIndicator.transform.localScale = new Vector3(9, 3, 9);
-                enemyRb.mass = 5;
-                _speed = speed * 5;
-            }
-
-            hasSmaller = false;
-            hasBigger = true;
-            
             Destroy(other.gameObject);
-            
-            if (biggerCountDown != null)
-            {
-                StopCoroutine(biggerCountDown);
-            }
-            biggerCountDown = BiggerCountdownRoutine();
-            StartCoroutine(biggerCountDown);
+            triggerBigger();
         }
         else if (other.CompareTag("Smaller"))
         {
-            if (!hasSmaller)
-            {
-                transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
-                powerupIndicator.transform.localScale = new Vector3(1, 1/3.0f, 1);
-                enemyRb.mass = 1;
-                _speed = speed * 2;
-            }
-
-            hasSmaller = true;
-            hasBigger = false;
-            
             Destroy(other.gameObject);
-            
-            if (biggerCountDown != null)
-            {
-                StopCoroutine(biggerCountDown);
-            }
-            biggerCountDown = BiggerCountdownRoutine();
-            StartCoroutine(biggerCountDown);
+            triggerSmaller();
         }
+    }
+
+    public void triggerPowerup()
+    {
+        hasPowerup = true;
+        powerupIndicator.gameObject.SetActive(true);
+
+        if (powerupCountDown != null)
+        {
+            StopCoroutine(powerupCountDown);
+        }
+        powerupCountDown = PowerupCountdownRoutine();
+        StartCoroutine(powerupCountDown);
+    }
+
+    public void triggerBigger()
+    {
+        if (!hasBigger)
+        {
+            transform.localScale = new Vector3(4.5f, 4.5f, 4.5f);
+            transform.position = new Vector3(transform.position.x, 0, transform.position.z);
+            powerupIndicator.transform.localScale = new Vector3(9, 3, 9);
+            enemyRb.mass = 5;
+            _speed = speed * 5;
+        }
+
+        hasSmaller = false;
+        hasBigger = true;
+            
+        if (biggerCountDown != null)
+        {
+            StopCoroutine(biggerCountDown);
+        }
+        biggerCountDown = BiggerCountdownRoutine();
+        StartCoroutine(biggerCountDown);
+    }
+
+    public void triggerSmaller()
+    {
+        if (!hasSmaller)
+        {
+            transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+            powerupIndicator.transform.localScale = new Vector3(1, 1/3.0f, 1);
+            enemyRb.mass = 1;
+            _speed = speed * 2;
+        }
+
+        hasSmaller = true;
+        hasBigger = false;
+            
+        if (biggerCountDown != null)
+        {
+            StopCoroutine(biggerCountDown);
+        }
+        biggerCountDown = BiggerCountdownRoutine();
+        StartCoroutine(biggerCountDown);
     }
     
     private void OnCollisionEnter(Collision other)
